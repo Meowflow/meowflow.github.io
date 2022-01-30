@@ -22,8 +22,6 @@ https://meowflowgithubio.mmpro21.repl.co -- v1
 hope u enjoyed. everyone under this, this is dedicated to you.
 
 
-
-
 Meowflow (me) -- Website & creation
 
 
@@ -34,9 +32,6 @@ KEY329 -- most CSS
 
 
 AlexanderBelard (on Replit) -- Some of the HTML
-
-
-
 
 
 Thank you guys so much. I  couldnt have made this without everyone mentioned above.
