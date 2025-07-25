@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Swimmer's Link Hub</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+
+        :root {
+            --bg-color: #0c4a6e; /* Deep blue */
+            --wave-color-1: #075985;
+            --wave-color-2: #0369a1;
+            --wave-color-3: #0ea5e9;
+            --card-color: rgba(255, 255, 255, 0.1);
+            --card-border-color: rgba(255, 255, 255, 0.2);
+            --card-hover-border-color: #7dd3fc; /* Lighter Sky blue */
+            --text-color: #f0f9ff; /* Light sky blue */
+            --shadow-color: rgba(10, 20, 30, 0.2);
+            --glow-color: rgba(125, 211, 252, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .wave-container {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 220px; /* Increased height for a nice swell */
+            overflow: hidden;
+            z-index: 0;
+        }
+
+        .wave {
+            background: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 88.7'%3e%3cpath d='M800 56.9c-155.5 0-204.9-50-405.5-49.9-200 0-250 49.9-394.5 49.9v31.8h800v-.2-31.6z' fill='white'/%3e%3c/svg%3e");
+            position: absolute;
+            width: 200%;
+            height: 100%;
+            background-repeat: repeat-x;
+            background-size: 50% 100px;
+            bottom: 0;
+            left: 0;
+        }
+
+        .wave1 {
+            background-color: var(--wave-color-1);
+            animation: wave-swell 25s ease-in-out -5s infinite;
+            opacity: 1;
+        }
+
+        .wave2 {
+            background-color: var(--wave-color-2);
+            animation: wave-swell 20s ease-in-out -5s infinite reverse;
+            opacity: 0.7;
+        }
+
+        .wave3 {
+            background-color: var(--wave-color-3);
+            animation: wave-swell 15s ease-in-out -5s infinite;
+            opacity: 0.5;
+        }
+
+        @keyframes wave-swell {
+            0%, 100% {
+                transform: translateX(0) translateY(0);
+            }
+            50% {
+                transform: translateX(-25%) translateY(15px);
+            }
+        }
+
+        .container {
+            width: 90%;
+            max-width: 600px;
+            text-align: center;
+            padding: 20px 20px;
+            z-index: 1;
+            position: absolute;
+            top: 10%;
+            transform: translateY(-10%);
+        }
+
+
+        .profile {
+            margin-bottom: 40px;
+        }
+
+        .profile-pic {
+            width: 120px;
+            height: 120px;
+            background-color: var(--card-color);
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            border: 3px solid var(--card-hover-border-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 50px;
+            font-weight: 600;
+            backdrop-filter: blur(5px);
+        }
+
+        .profile h1 {
+            font-size: 2.2rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+            text-shadow: 0 2px 4px var(--shadow-color);
+        }
+
+        .profile p {
+            font-size: 1rem;
+            font-weight: 300;
+            opacity: 0.9;
+        }
+
+        .links-grid {
+            display: grid;
+            gap: 20px;
+        }
+
+        .link-card {
+            background-color: var(--card-color);
+            border-radius: 15px;
+            padding: 20px;
+            text-decoration: none;
+            color: var(--text-color);
+            font-size: 1.1rem;
+            font-weight: 400;
+            text-align: center;
+            border: 1px solid var(--card-border-color);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
+                        box-shadow 0.3s ease,
+                        border-color 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 15px var(--shadow-color);
+            backdrop-filter: blur(5px);
+        }
+
+        .link-card:hover {
+            border-color: var(--card-hover-border-color);
+            box-shadow: 0 0 25px var(--glow-color);
+        }
+
+        footer {
+            position: absolute;
+            bottom: 20px;
+            font-size: 0.8rem;
+            opacity: 0.7;
+            z-index: 1;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="wave-container">
+        <div class="wave wave1"></div>
+        <div class="wave wave2"></div>
+        <div class="wave wave3"></div>
+    </div>
+
+    <div class="container">
+        <header class="profile">
+            <div class="profile-pic">
+                <span>🌊</span>
+            </div>
+            <h1>swimhub</h1>
+            <p>everything I've made for swimming so far :)</p>
+        </header>
+
+        <main class="links-grid">
+            <a href="../pvsmeetinfo/pvs.html" class="link-card">PVS Meet Info (WIP, 25% complete)</a>
+            <a href="#" class="link-card">Swimcast (WIP, 40% complete)</a>
+            <a href="../aquarank/index.html" class="link-card">AquaRank (WIP, 0% complete)</a>
+            <a href="#" class="link-card">Coming soon?</a>
+        </main>
+    </div>
+
+    <footer>
+        <p>Go <a href="../index.html">back</a></p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Card hover effect script
+            const cards = document.querySelectorAll('.link-card');
+            cards.forEach(card => {
+                card.addEventListener('mousemove', (e) => {
+                    const rect = card.getBoundingClientRect();
+                    const x = e.clientX - rect.left - rect.width / 2;
+                    const y = e.clientY - rect.top - rect.height / 2;
+                    const rotateX = (y / rect.height) * -10;
+                    const rotateY = (x / rect.width) * 10;
+                    const moveX = (x / rect.width) * 5;
+                    const moveY = (y / rect.height) * 5;
+                    card.style.transform = `translate(${moveX}px, ${moveY}px) perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.05)`;
+                });
+                card.addEventListener('mouseleave', () => {
+                    card.style.transform = 'translate(0,0) perspective(1000px) rotateX(0) rotateY(0) scale(1)';
+                });
+            });
+        });
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AquaRank - Your Swimming Elo</title>
+    <style>
+        :root {
+            --primary-color: #005f73;
+            --secondary-color: #0a9396;
+            --accent-color: #94d2bd;
+            --background-start: #e0fbfc;
+            --background-mid: #cce3de;
+            --background-end: #a9d6e5;
+            --text-color: #001219;
+            --card-bg-color: rgba(255, 255, 255, 0.9);
+            --gold-color: #ffd700;
+            --silver-color: #c0c0c0;
+            --bronze-color: #cd7f32;
+            --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        @keyframes moveGradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes shimmer-blue {
+            0% { background-position: -100% 0; }
+            100% { background-position: 100% 0; }
+        }
+
+        @keyframes shimmer-pink {
+            0% { background-position: -100% 0; }
+            100% { background-position: 100% 0; }
+        }
+
+        body {
+            font-family: var(--font-family);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(-45deg, var(--background-start), var(--background-mid), var(--background-end));
+            background-size: 400% 400%;
+            animation: moveGradient 15s ease infinite;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 700px;
+            text-align: center;
+        }
+
+        header {
+            margin-bottom: 40px;
+        }
+
+        header h1 {
+            font-size: 3rem;
+            color: var(--primary-color);
+            margin: 0;
+            font-weight: 800;
+            letter-spacing: -1px;
+        }
+
+        header h1 .highlight {
+            color: var(--secondary-color);
+        }
+
+        header p {
+            font-size: 1.1rem;
+            color: var(--text-color);
+            opacity: 0.8;
+            max-width: 500px;
+            margin: 10px auto 0;
+        }
+
+        .search-box {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        #swimmer-input {
+            width: 100%;
+            max-width: 300px;
+            padding: 12px 15px;
+            font-size: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            background-color: rgba(255,255,255,0.8);
+        }
+
+        #swimmer-input:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 3px rgba(10, 147, 150, 0.2);
+        }
+
+        #search-btn {
+            padding: 12px 25px;
+            font-size: 1rem;
+            font-weight: 600;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        #search-btn:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        .results-container {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+            width: 100%;
+        }
+
+        .results-container.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .swimmer-card {
+            background-color: var(--card-bg-color);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            text-align: left;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+
+        .swimmer-info h2 {
+            margin: 0;
+            font-size: 1.8rem;
+            color: var(--primary-color);
+        }
+
+        .total-rank {
+            text-align: right;
+            display: flex;
+            align-items: center;
+        }
+
+        .total-rank .rank-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--secondary-color);
+            line-height: 1;
+        }
+
+        .total-rank .rank-label {
+            font-size: 0.9rem;
+            color: var(--text-color);
+            opacity: 0.7;
+            letter-spacing: 0.5px;
+        }
+
+        .total-rank-score {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+
+        .total-grade-badge {
+            padding: 6px 14px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            border-radius: 8px;
+            margin-left: 15px;
+            color: white;
+        }
+
+        /* Grade Colors */
+        .grade-SS {
+            background: linear-gradient(90deg, #ff006e, #ff8fa3, #ff006e);
+            background-size: 200% 100%;
+            animation: shimmer-pink 3s ease-in-out infinite;
+        }
+        .grade-S { background-color: #ff69b4; }
+        .grade-A-plus { background-color: #2a9d8f; }
+        .grade-A { background-color: #80ed99; color: var(--text-color); }
+        .grade-B { background-color: #fca311; }
+        .grade-C { background-color: #fee440; color: var(--text-color); }
+        .grade-D { background-color: #e63946; }
+
+
+        .times-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .times-table th, .times-table td {
+            padding: 12px 15px;
+            text-align: left;
+        }
+
+        .times-table th {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-color);
+            opacity: 0.6;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .times-table tr:not(:last-child) td {
+            border-bottom: 1px solid #f5f5f5;
+        }
+
+        .times-table td {
+            font-size: 1rem;
+        }
+
+        .rank-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-color);
+        }
+
+        .rank-PRO {
+            background: linear-gradient(90deg, #0077b6, #90e0ef, #0077b6);
+            background-size: 200% 100%;
+            animation: shimmer-blue 3s ease-in-out infinite;
+            color: white;
+            font-weight: 700;
+        }
+        .rank-AAAA { background-color: var(--gold-color); }
+        .rank-AAA { background-color: var(--silver-color); }
+        .rank-AA { background-color: var(--bronze-color); color: white; }
+        .rank-A { background-color: var(--accent-color); }
+        .rank-B { background-color: #e0e0e0; }
+        .rank-C { background-color: #f8f9fa; }
+
+        .share-section {
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        #share-btn {
+            padding: 12px 30px;
+            font-size: 1rem;
+            font-weight: 600;
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        #share-btn:hover {
+            background-color: var(--primary-color);
+            transform: translateY(-2px);
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--primary-color);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 6px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+
+        .notification.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .error-message {
+            color: #d90429;
+            margin-top: 15px;
+            display: none;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        footer {
+            margin-top: 50px;
+            font-size: 0.9rem;
+            opacity: 0.8;
+            color: #001219;
+        }
+
+        @media (max-width: 600px) {
+            body { padding: 15px; }
+            header h1 { font-size: 2.5rem; }
+            header p { font-size: 1rem; }
+            .search-box { flex-direction: column; }
+            .card-header { flex-direction: column; gap: 15px; }
+            .swimmer-info { text-align: center; }
+            .total-rank { justify-content: center; }
+            .times-table th, .times-table td { padding: 10px 5px; }
+            .times-table td:first-child { font-weight: 600; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Aqua<span class="highlight">Rank</span></h1>
+            <p>Enter a swimmer's name to find their best times and discover their total competitive rank. Share with friends and climb the leaderboard!</p>
+            <h5>Remember to type the swimmers' name EXACTLY: e.g. "Alex Johnson" or "Maria Garcia"</h5>
+        </header>
+
+        <main>
+            <div class="search-box">
+                <input type="text" id="swimmer-input" placeholder="e.g., Alex Johnson" list="swimmers-list">
+                <datalist id="swimmers-list"></datalist>
+                <button id="search-btn">Get Rank</button>
+            </div>
+            <p id="error-message" class="error-message">Swimmer not found. Please try another name.</p>
+
+            <div id="results-container" class="results-container">
+                <div class="swimmer-card">
+                    <div class="card-header">
+                        <div class="swimmer-info">
+                            <h2 id="swimmer-name"></h2>
+                        </div>
+                        <div class="total-rank">
+                            <div class="total-rank-score">
+                                <div id="total-rank-value" class="rank-value"></div>
+                                <div class="rank-label">Total Rank Score</div>
+                            </div>
+                            <div id="total-grade-badge"></div>
+                        </div>
+                    </div>
+                    <table class="times-table" id="times-table-body">
+                        <thead>
+                            <tr>
+                                <th>Event</th>
+                                <th>Time</th>
+                                <th>Standard</th>
+                                <th>Score</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- JS will populate this -->
+                        </tbody>
+                    </table>
+                    <div class="share-section">
+                        <button id="share-btn">Share My Rank</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>&copy; 2025 AquaRank. Designed for motivation.</p>
+        </footer>
+    </div>
+
+    <div id="notification" class="notification">Link copied to clipboard!</div>
+
+    <script>
+        // --- MOCK DATABASE & CONFIGURATION ---
+
+        const timeStandards = {
+            '50 Free':   { PRO: 20.00, AAAA: 21.39, AAA: 22.39, AA: 23.39, A: 24.39, B: 26.39 },
+            '100 Free':  { PRO: 44.00, AAAA: 46.59, AAA: 48.79, AA: 50.99, A: 53.19, B: 57.59 },
+            '200 Free':  { PRO: 136.00, AAAA: 141.59, AAA: 146.49, AA: 151.39, A: 156.29, B: 206.09 },
+            '100 Back':  { PRO: 49.00, AAAA: 51.49, AAA: 53.89, AA: 56.29, A: 58.69, B: 103.49 },
+            '100 Breast':{ PRO: 54.00, AAAA: 57.59, AAA: 100.39, AA: 103.19, A: 105.99, B: 111.59 },
+            '100 Fly':   { PRO: 48.50, AAAA: 50.99, AAA: 53.39, AA: 55.79, A: 58.19, B: 102.99 },
+            '200 IM':    { PRO: 148.00, AAAA: 154.59, AAA: 159.99, AA: 205.39, A: 210.79, B: 221.59 },
+        };
+
+        const rankPoints = { PRO: 1200, AAAA: 1000, AAA: 850, AA: 700, A: 550, B: 400, C: 250 };
+        const standardOrder = ['PRO', 'AAAA', 'AAA', 'AA', 'A', 'B'];
+
+        const swimmersDB = {
+            'alex johnson': {
+                name: 'Alex Johnson',
+                times: [
+                    { event: '50 Free', time: 21.15 },
+                    { event: '100 Free', time: 46.99 },
+                    { event: '100 Back', time: 52.01 },
+                    { event: '100 Fly', time: 48.21 },
+                ]
+            },
+            'maria garcia': {
+                name: 'Maria Garcia',
+                times: [ { event: '100 Free', time: 50.85 }, { event: '200 Free', time: 150.99 }, { event: '100 Breast', time: 102.50 }, { event: '200 IM', time: 204.80 } ]
+            },
+            'sam chen': {
+                name: 'Sam Chen',
+                times: [ { event: '50 Free', time: 24.12 }, { event: '100 Free', time: 53.01 }, { event: '100 Back', time: 58.15 }, { event: '100 Breast', time: 105.00 } ]
+            }
+        };
+
+        // --- CORE LOGIC ---
+
+        function calculateScoreForTime(event, swimmerTime) {
+            const eventStandards = timeStandards[event];
+            if (!eventStandards) return { score: 0, standard: 'N/A' };
+
+            if (swimmerTime <= eventStandards.PRO) {
+                return { score: rankPoints.PRO, standard: 'PRO' };
+            }
+
+            for (let i = 0; i < standardOrder.length - 1; i++) {
+                const upperStandardName = standardOrder[i];
+                const lowerStandardName = standardOrder[i+1];
+                const upperTime = eventStandards[upperStandardName];
+                const lowerTime = eventStandards[lowerStandardName];
+
+                if (swimmerTime >= upperTime && swimmerTime < lowerTime) {
+                    const upperPoints = rankPoints[upperStandardName];
+                    const lowerPoints = rankPoints[lowerStandardName];
+                    const timeRange = lowerTime - upperTime;
+                    const pointRange = upperPoints - lowerPoints;
+
+                    if (timeRange <= 0) return { score: upperPoints, standard: upperStandardName };
+
+                    const timeProgress = swimmerTime - upperTime;
+                    const score = upperPoints - (timeProgress / timeRange) * pointRange;
+                    return { score: score, standard: lowerStandardName };
+                }
+            }
+
+            if (swimmerTime >= eventStandards.B) {
+                return { score: rankPoints.C, standard: 'C' };
+            }
+
+            return { score: 0, standard: 'N/A' };
+        }
+
+        function getGradeForTotalScore(score) {
+            if (score >= 4200) return 'SS';
+            if (score >= 3800) return 'S';
+            if (score >= 3400) return 'A+';
+            if (score >= 3000) return 'A';
+            if (score >= 2500) return 'B';
+            if (score >= 2000) return 'C';
+            return 'D';
+        }
+
+        function formatTime(totalSeconds) {
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = (totalSeconds % 60).toFixed(2).padStart(5, '0');
+            return minutes > 0 ? `${minutes}:${seconds}` : seconds.replace(/^0+/, '');
+        }
+
+        function displayResults(swimmerData) {
+            const { name, times } = swimmerData;
+            let totalRank = 0;
+
+            const swimmerNameEl = document.getElementById('swimmer-name');
+            const totalRankValueEl = document.getElementById('total-rank-value');
+            const totalGradeBadgeEl = document.getElementById('total-grade-badge');
+            const tableBodyEl = document.querySelector('#times-table-body tbody');
+            const resultsContainer = document.getElementById('results-container');
+            const errorMessage = document.getElementById('error-message');
+
+            swimmerNameEl.textContent = name;
+            tableBodyEl.innerHTML = '';
+
+            times.forEach(t => {
+                const result = calculateScoreForTime(t.event, t.time);
+                totalRank += result.score;
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${t.event}</td>
+                    <td>${formatTime(t.time)}</td>
+                    <td><span class="rank-badge rank-${result.standard}">${result.standard}</span></td>
+                    <td>${Math.round(result.score)}</td>
+                `;
+                tableBodyEl.appendChild(row);
+            });
+
+            totalRankValueEl.textContent = Math.round(totalRank);
+
+            const grade = getGradeForTotalScore(totalRank);
+            totalGradeBadgeEl.textContent = grade;
+            const gradeClassName = `grade-${grade.replace('+', '-plus')}`;
+            totalGradeBadgeEl.className = `total-grade-badge ${gradeClassName}`;
+
+            errorMessage.style.display = 'none';
+            resultsContainer.classList.add('visible');
+        }
+
+        function handleSearch() {
+            const input = document.getElementById('swimmer-input').value.toLowerCase().trim();
+            const swimmerData = swimmersDB[input];
+            const resultsContainer = document.getElementById('results-container');
+            const errorMessage = document.getElementById('error-message');
+
+            if (swimmerData) {
+                displayResults(swimmerData);
+            } else {
+                resultsContainer.classList.remove('visible');
+                errorMessage.style.display = 'block';
+            }
+        }
+
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.classList.add('show');
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 2500);
+        }
+
+        function handleShare() {
+            const swimmerName = document.getElementById('swimmer-name').textContent;
+            const totalRank = document.getElementById('total-rank-value').textContent;
+            const grade = document.getElementById('total-grade-badge').textContent;
+
+            if (!swimmerName) return;
+
+            const shareText = `Check out my AquaRank for ${swimmerName}! I'm a grade ${grade} with a score of ${totalRank}. Can you beat it?`;
+            const shareUrl = window.location.href.split('?')[0] + `?swimmer=${encodeURIComponent(swimmerName.toLowerCase().trim())}`;
+
+            navigator.clipboard.writeText(`${shareText} ${shareUrl}`).then(() => {
+                showNotification('Link and score copied to clipboard!');
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                showNotification('Could not copy link.');
+            });
+        }
+
+        function checkUrlForSwimmer() {
+            const params = new URLSearchParams(window.location.search);
+            const swimmerName = params.get('swimmer');
+            if (swimmerName && swimmersDB[swimmerName]) {
+                document.getElementById('swimmer-input').value = swimmersDB[swimmerName].name;
+                displayResults(swimmersDB[swimmerName]);
+            }
+        }
+
+        // --- EVENT LISTENERS ---
+        document.getElementById('search-btn').addEventListener('click', handleSearch);
+        document.getElementById('swimmer-input').addEventListener('keyup', (event) => {
+            if (event.key === 'Enter') {
+                handleSearch();
+            }
+        });
+        document.getElementById('share-btn').addEventListener('click', handleShare);
+
+        const datalist = document.getElementById('swimmers-list');
+        Object.values(swimmersDB).forEach(swimmer => {
+            const option = document.createElement('option');
+            option.value = swimmer.name;
+            datalist.appendChild(option);
+        });
+
+        window.addEventListener('load', checkUrlForSwimmer);
+
+    </script>
+</body>
+</html>
