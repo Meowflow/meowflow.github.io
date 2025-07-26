@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SwimCast - Forecast Results</title>
+    <style>
+      :root {
+        --primary-blue: #0a84ff;
+        --secondary-blue: #3f8efc;
+        --accent-color: #5e5ce6; /* A cool purple accent */
+        --background-light: #f9f9f9;
+        --card-background: #ffffff;
+        --text-dark: #1d1d1f;
+        --text-light: #ffffff;
+        --text-muted: #6e6e73;
+        --border-color: #d1d1d6;
+        --shadow-color: rgba(0, 0, 0, 0.08);
+        --pattern-color: rgba(10, 132, 255, 0.05);
+        --safe-color: #34c759; /* Modern green */
+        --unsafe-color: #ff3b30; /* Modern red */
+        --caution-color: #ff9500; /* Modern orange */
+        --rain-bar-color: #89cff0; /* Light blue for rain bars */
+        --graph-line-color: rgba(255, 255, 255, 0.3);
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+          "Segoe UI Symbol";
+        background-color: var(--background-light);
+        color: var(--text-dark);
+        line-height: 1.6;
+        font-size: 16px;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        background-image: linear-gradient(
+            45deg,
+            var(--pattern-color) 25%,
+            transparent 25%
+          ),
+          linear-gradient(-45deg, var(--pattern-color) 25%, transparent 25%),
+          linear-gradient(45deg, transparent 75%, var(--pattern-color) 75%),
+          linear-gradient(-45deg, transparent 75%, var(--pattern-color) 75%);
+        background-size: 40px 40px;
+        background-position: 0 0, 0 20px, 20px -20px, -20px 0px;
+      }
+
+      .container {
+        width: 90%;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 0 15px;
+      }
+
+      /* Navigation Bar (same as index.html) */
+      .navbar {
+        background-color: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        padding: 15px 0;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        z-index: 1000;
+        box-shadow: 0 1px 3px var(--shadow-color);
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      .navbar .container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .logo {
+        font-size: 1.8em;
+        font-weight: 700;
+        color: var(--primary-blue);
+        text-decoration: none;
+      }
+
+      .nav-links {
+        list-style: none;
+        display: flex;
+      }
+      .nav-links li {
+        margin-left: 25px;
+      }
+      .nav-links a {
+        text-decoration: none;
+        color: var(--text-dark);
+        font-weight: 500;
+        transition: color 0.3s ease;
+      }
+      .nav-links a:hover {
+        color: var(--primary-blue);
+      }
+      .menu-toggle {
+        display: none;
+        font-size: 1.8em;
+        background: none;
+        border: none;
+        color: var(--primary-blue);
+        cursor: pointer;
+      }
+
+      /* Main Content Area */
+      main {
+        padding: 100px 0 60px; /* Top padding for fixed navbar */
+        flex-grow: 1;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+      }
+
+      .results-wrapper {
+        /* New wrapper for layout */
+        width: 100%;
+        max-width: 700px;
+      }
+
+      .results-header {
+        margin-bottom: 20px;
+        background-color: var(--card-background);
+        padding: 20px 25px;
+        border-radius: 16px;
+        box-shadow: 0 5px 15px var(--shadow-color);
+      }
+      .results-header h2 {
+        font-size: 1.7em;
+        color: var(--text-dark);
+        margin-top: 0;
+        margin-bottom: 5px;
+        font-weight: 600;
+        word-break: break-word;
+      }
+      .results-header .location-name {
+        color: var(--primary-blue);
+        font-weight: 700;
+      }
+      .results-header .timestamp {
+        font-size: 0.85em;
+        color: var(--text-muted);
+        display: block;
+      }
+
+      /* Current Conditions Box */
+      .current-conditions-box {
+        background-color: #6c757d; /* Default darkish background */
+        color: var(--text-light);
+        padding: 25px;
+        border-radius: 16px;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        margin-bottom: 25px;
+        position: relative;
+        overflow: hidden; /* For animations */
+      }
+      .current-conditions-box h3 {
+        font-size: 1.6em;
+        margin-top: 0;
+        margin-bottom: 5px;
+        font-weight: 600;
+      }
+      .current-conditions-box .condition-summary {
+        font-size: 1.1em;
+        margin-bottom: 20px;
+        color: rgba(255, 255, 255, 0.85);
+      }
+
+      /* Animated Backgrounds */
+      .current-conditions-box.bg-sunny {
+        background: linear-gradient(135deg, #ffd700, #ffa500);
+      }
+      .current-conditions-box.bg-cloudy {
+        background: linear-gradient(135deg, #b0c4de, #778899);
+      }
+      .current-conditions-box.bg-rain {
+        background-color: #4682b4; /* Steel Blue */
+      }
+      .current-conditions-box.bg-thunderstorm {
+        background-color: #2f4f4f; /* Dark Slate Gray */
+        animation: lightningFlash 3s infinite;
+      }
+
+      .current-conditions-box.bg-rain::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image: linear-gradient(
+            0deg,
+            transparent 50%,
+            rgba(200, 220, 255, 0.2) 50%
+          ),
+          linear-gradient(90deg, transparent 50%, rgba(200, 220, 255, 0.1) 50%);
+        background-size: 3px 20px, 20px 3px;
+        animation: rain-lines 0.5s linear infinite;
+        opacity: 0.5;
+      }
+      @keyframes rain-lines {
+        0% {
+          background-position: 0 0, 0 0;
+        }
+        100% {
+          background-position: 0 20px, 0 0;
+        }
+      }
+
+      @keyframes lightningFlash {
+        0%,
+        90%,
+        100% {
+          opacity: 1;
+          background-color: #2f4f4f;
+        }
+        92% {
+          opacity: 0.6;
+          background-color: #778899;
+        } /* Flash effect */
+        94% {
+          opacity: 1;
+          background-color: #2f4f4f;
+        }
+      }
+
+      /* Rain Graph */
+      .rain-graph {
+        margin-top: 15px;
+      }
+      .rain-graph-title {
+        font-size: 1.1em;
+        font-weight: 500;
+        margin-bottom: 5px;
+      }
+      .rain-graph-subtitle {
+        font-size: 0.9em;
+        color: rgba(255, 255, 255, 0.7);
+        margin-bottom: 15px;
+      }
+      .graph-area {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end; /* Bars grow upwards */
+        height: 80px; /* Max height for bars */
+        padding: 0 10px;
+        border-bottom: 1px solid var(--graph-line-color);
+        position: relative;
+      }
+      .graph-area::before,
+      .graph-area::after {
+        /* Dotted lines */
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background-image: linear-gradient(
+          to right,
+          var(--graph-line-color) 50%,
+          transparent 50%
+        );
+        background-size: 8px 1px;
+      }
+      .graph-area::before {
+        bottom: 33%;
+      } /* Approx 1/3 height */
+      .graph-area::after {
+        bottom: 66%;
+      } /* Approx 2/3 height */
+
+      .graph-bar-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+      .graph-bar {
+        width: 60%;
+        max-width: 12px;
+        background-color: var(--rain-bar-color);
+        border-radius: 3px 3px 0 0;
+        transition: height 0.5s ease-out;
+        margin-bottom: 5px; /* Space for label */
+      }
+      .graph-label {
+        font-size: 0.75em;
+        color: rgba(255, 255, 255, 0.9);
+      }
+
+      /* Safety Status & Details (similar to before, but within .results-wrapper) */
+      .results-details-card {
+        background-color: var(--card-background);
+        padding: 25px;
+        border-radius: 16px;
+        box-shadow: 0 8px 25px var(--shadow-color);
+      }
+      .safety-status-wrapper {
+        margin-bottom: 25px;
+      }
+      .safety-status {
+        font-size: clamp(1.4rem, 3.5vw, 1.8rem);
+        font-weight: 700;
+        padding: 18px 22px;
+        border-radius: 10px;
+        text-align: center;
+        color: var(--text-light);
+        transition: background-color 0.5s ease;
+      }
+      .status-safe {
+        background-color: var(--safe-color);
+      }
+      .status-unsafe {
+        background-color: var(--unsafe-color);
+      }
+      .status-caution {
+        background-color: var(--caution-color);
+        color: var(--text-dark);
+      }
+      .status-loading {
+        background-color: var(--border-color);
+        color: var(--text-muted);
+      }
+
+      .weather-details h3 {
+        font-size: 1.3em;
+        color: var(--secondary-blue);
+        margin-top: 0;
+        margin-bottom: 15px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid var(--primary-blue);
+        font-weight: 600;
+      }
+      .detail-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--border-color);
+        font-size: 1em;
+      }
+      .detail-item:last-child {
+        border-bottom: none;
+      }
+      .detail-item strong {
+        color: var(--text-dark);
+        font-weight: 500;
+      }
+      .detail-item span {
+        color: var(--text-muted);
+        text-align: right;
+      }
+
+      .additional-notes {
+        margin-top: 20px;
+        padding: 15px;
+        background-color: #e9f5ff;
+        border-left: 4px solid var(--primary-blue);
+        border-radius: 4px;
+        color: var(--text-dark);
+        font-size: 0.9em;
+      }
+      .additional-notes strong {
+        color: var(--primary-blue);
+      }
+
+      .actions-container {
+        margin-top: 30px;
+        text-align: center;
+      }
+      .search-again-button {
+        display: inline-block;
+        background-color: var(--primary-blue);
+        color: var(--text-light);
+        padding: 12px 28px;
+        text-decoration: none;
+        border-radius: 50px;
+        font-size: 1.05em;
+        font-weight: 500;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+        border: none;
+        cursor: pointer;
+      }
+      .search-again-button:hover {
+        background-color: var(--accent-color);
+        transform: translateY(-2px);
+      }
+
+      /* Footer */
+      footer {
+        background-color: var(--text-dark);
+        color: rgba(
+          255,
+          255,
+          255,
+          0.7
+        ); /* Slightly muted white for less emphasis */
+        text-align: center;
+        padding: 40px 20px; /* Added more padding for extra lines */
+        margin-top: auto; /* Pushes footer to bottom */
+      }
+      footer p {
+        margin: 0 0 10px 0; /* Space between paragraphs */
+        font-size: 0.9em; /* Slightly smaller for disclaimer */
+        line-height: 1.5;
+      }
+      footer p:last-child {
+        margin-bottom: 0;
+      }
+      footer .copyright {
+        font-size: 0.95em; /* Keep copyright slightly larger */
+        color: var(--text-light); /* Brighter for copyright */
+        margin-bottom: 15px; /* More space before disclaimer */
+      }
+      footer a {
+        color: var(--primary-blue); /* Use primary blue for link */
+        text-decoration: none;
+        font-weight: 500;
+      }
+      footer a:hover {
+        text-decoration: underline;
+        color: var(--secondary-blue);
+      }
+
+      /* Mobile Responsiveness */
+      @media (max-width: 768px) {
+        .nav-links {
+          display: none;
+          flex-direction: column;
+          width: 100%;
+          position: absolute;
+          top: 65px;
+          left: 0;
+          background-color: rgba(255, 255, 255, 0.98);
+          padding: 10px 0;
+          box-shadow: 0 5px 10px var(--shadow-color);
+        }
+        .nav-links.active {
+          display: flex;
+        }
+        .nav-links li {
+          margin: 10px 0;
+          text-align: center;
+        }
+        .menu-toggle {
+          display: block;
+        }
+
+        main {
+          padding: 90px 15px 40px;
+        }
+        .results-header h2 {
+          font-size: 1.5em;
+        }
+        .current-conditions-box {
+          padding: 20px;
+        }
+        .current-conditions-box h3 {
+          font-size: 1.4em;
+        }
+        .current-conditions-box .condition-summary {
+          font-size: 1em;
+        }
+        .rain-graph-title {
+          font-size: 1em;
+        }
+        .graph-label {
+          font-size: 0.7em;
+        }
+        .graph-bar {
+          max-width: 10px;
+        }
+
+        .results-details-card {
+          padding: 20px;
+        }
+        .safety-status {
+          font-size: 1.2rem;
+          padding: 15px;
+        }
+        .weather-details h3 {
+          font-size: 1.15em;
+        }
+        .detail-item {
+          font-size: 0.95em;
+        }
+
+        footer {
+          padding: 30px 15px;
+        }
+        footer p {
+          font-size: 0.85em;
+        }
+        footer .copyright {
+          font-size: 0.9em;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar">
+      <div class="container">
+        <a href="index.html" class="logo">SwimCast</a>
+        <button
+          class="menu-toggle"
+          id="menuToggle"
+          aria-label="Toggle navigation"
+          aria-expanded="false"
+        >
+          &#9776;
+        </button>
+        <ul class="nav-links" id="navLinks">
+          <li><a href="index.html#hero-section">Home</a></li>
+          <li><a href="index.html#how-it-works">How It Works</a></li>
+          <li>
+            <a href="index.html#enhanced-locations">Enhanced Locations</a>
+          </li>
+          <li><a href="index.html#about-us">About Us</a></li>
+        </ul>
+      </div>
+    </nav>
+
+    <main>
+      <div class="results-wrapper">
+        <div class="results-header">
+          <h2>
+            Swim Forecast for
+            <span id="locationName" class="location-name">your location</span>
+          </h2>
+          <span class="timestamp" id="forecastTimestamp"></span>
+        </div>
+
+        <div id="currentConditionsBox" class="current-conditions-box">
+          <h3 id="currentConditionTitle">Loading Live Conditions...</h3>
+          <p id="currentConditionSummary" class="condition-summary">
+            Fetching details...
+          </p>
+
+          <div id="rainGraphContainer" class="rain-graph" style="display: none">
+            <p class="rain-graph-title" id="rainGraphTitleText">
+              Rainfall - Next Hour
+            </p>
+            <p class="rain-graph-subtitle" id="rainGraphSubtitleText">
+              Chance of precipitation in the next 60 minutes.
+            </p>
+            <div class="graph-area" id="graphArea">
+              <!-- Bars will be injected here by JS -->
+            </div>
+          </div>
+        </div>
+
+        <div class="results-details-card">
+          <div class="safety-status-wrapper">
+            <div id="safetyStatus" class="safety-status status-loading">
+              Fetching overall safety...
+            </div>
+          </div>
+
+          <div class="weather-details">
+            <h3>Detailed Outlook:</h3>
+            <div class="detail-item">
+              <strong>Current Weather:</strong>
+              <span id="currentWeather">Loading...</span>
+            </div>
+            <div class="detail-item">
+              <strong>Thunderstorm Risk:</strong>
+              <span id="thunderRisk">Loading...</span>
+            </div>
+            <div class="detail-item">
+              <strong>Anticipated Rain:</strong>
+              <span id="rainDuration">Loading...</span>
+            </div>
+            <div class="detail-item">
+              <strong>Wind:</strong> <span id="windInfo">Loading...</span>
+            </div>
+            <div class="detail-item">
+              <strong>Air Temperature:</strong>
+              <span id="airTemp">Loading...</span>
+            </div>
+          </div>
+
+          <div
+            id="additionalNotes"
+            class="additional-notes"
+            style="display: none"
+          >
+            <strong>Note:</strong> <span id="notesContent"></span>
+          </div>
+        </div>
+
+        <div class="actions-container">
+          <a href="index.html" class="search-again-button"
+            >Check Another Location</a
+          >
+        </div>
+      </div>
+    </main>
+
+    <footer>
+      <div class="container">
+        <p class="copyright">
+          &copy; <span id="currentYear"></span> SwimCast. Dive in with
+          confidence!
+        </p>
+        <p class="disclaimer">
+          <strong>Beta Notice:</strong> SwimCast is currently in beta.
+          Information provided may not always be 100% accurate. Please always
+          use your best judgment and check multiple sources before swimming,
+          especially in uncertain conditions.
+        </p>
+        <p class="donate-link">
+          Enjoying SwimCast? Consider
+          <a href="#" id="donateLinkPlaceholder">supporting its development</a>.
+        </p>
+      </div>
+    </footer>
+
+    <script>
+const ACCUWEATHER_API_KEY = "EtDhFlWkKTRuBwPP6UYHviuAFPkbzSBH";
+const ACCUWEATHER_MINUTECAST_API_KEY = "ryDWlzw2NYGBGctOvVVHxrwcm1Yfs0rH";
+const AMBIENT_API_KEY = "YOUR_AMBIENT_API_KEY";
+const AMBIENT_APP_KEY = "YOUR_AMBIENT_APP_KEY";
+const COUNTRY_GLEN_DEVICE_ID = "YOUR_AMBIENT_DEVICE_ID";
+      document.getElementById("currentYear").textContent =
+        new Date().getFullYear();
+
+      const menuToggle = document.getElementById("menuToggle");
+      const navLinks = document.getElementById("navLinks");
+      if (menuToggle && navLinks) {
+        menuToggle.addEventListener("click", () => {
+          navLinks.classList.toggle("active");
+          menuToggle.setAttribute(
+            "aria-expanded",
+            navLinks.classList.contains("active")
+          );
+        });
+      }
+      document.querySelectorAll(".nav-links a").forEach((link) => {
+        link.addEventListener("click", () => {
+          if (navLinks && navLinks.classList.contains("active")) {
+            navLinks.classList.remove("active");
+            if (menuToggle) menuToggle.setAttribute("aria-expanded", "false");
+          }
+        });
+      });
+
+      document.addEventListener("DOMContentLoaded", function () {
+        const params = new URLSearchParams(window.location.search);
+        const location = params.get("location");
+        document.getElementById("locationName").textContent = location
+          ? decodeURIComponent(location)
+          : "an unknown location";
+        document.getElementById(
+          "forecastTimestamp"
+        ).textContent = `Forecast generated: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`;
+
+        if (location) fetchSwimData(decodeURIComponent(location));
+        else displayErrorData("No location provided.");
+
+        // You can set the actual donate link here if you have it
+        // document.getElementById('donateLinkPlaceholder').href = 'YOUR_DONATION_LINK_HERE';
+      });
+
+      function renderRainGraph(rainIntensityData) {
+        // rainIntensityData is an array of 6 values (0-3 for intensity)
+        const graphArea = document.getElementById("graphArea");
+        const rainGraphContainer =
+          document.getElementById("rainGraphContainer");
+        graphArea.innerHTML = ""; // Clear previous bars
+
+        if (
+          !rainIntensityData ||
+          rainIntensityData.every((intensity) => intensity === 0)
+        ) {
+          rainGraphContainer.style.display = "none";
+          return;
+        }
+        rainGraphContainer.style.display = "block";
+
+        const timeLabels = ["Now", "10m", "20m", "30m", "40m", "50m"];
+        const maxIntensity = 3; // Assuming intensity 0 (no rain), 1 (light), 2 (medium), 3 (heavy)
+
+        rainIntensityData.forEach((intensity, index) => {
+          const barContainer = document.createElement("div");
+          barContainer.className = "graph-bar-container";
+
+          const bar = document.createElement("div");
+          bar.className = "graph-bar";
+          const barHeightPercentage =
+            intensity > 0 ? (intensity / maxIntensity) * 100 : 0;
+          bar.style.height = `${barHeightPercentage}%`;
+
+          const intensityLine = document.createElement("div");
+          intensityLine.style.height = '2px';
+          intensityLine.style.backgroundColor = 'red'; // Color for intensity line
+          intensityLine.style.width = `100%`;
+          intensityLine.style.position = 'absolute';
+          intensityLine.style.top = `${100 - barHeightPercentage}%`;
+
+          const label = document.createElement("div");
+          label.className = "graph-label";
+          label.textContent = timeLabels[index];
+
+          barContainer.appendChild(bar);
+          barContainer.appendChild(intensityLine);
+          barContainer.appendChild(label);
+          graphArea.appendChild(barContainer);
+        });
+      }
+
+
+      async function fetchSwimData(location) {
+        // Array of predefined locations (case-insensitive)
+        const predefinedLocations = [
+          { name: "Country Glen", deviceId: "COUNTRY_GLEN_DEVICE_ID" },
+          { name: "Rockville Swim Center", deviceId: "ROCKVILLE_DEVICE_ID" },
+          { name: "Example Pool", deviceId: "EXAMPLE_DEVICE_ID" },
+          // Add more locations here as needed
+        ];
+
+        // Find a matching location (case-insensitive)
+        const matchedLocation = predefinedLocations.find((loc) =>
+          loc.name.toLowerCase() === location.toLowerCase()
+        );
+
+        if (matchedLocation) {
+          // Fetch data for the matched location
+          fetchAmbientData(matchedLocation.deviceId);
+        } else {
+          // If no predefined location matches, use AccuWeather API
+          fetchAccuWeatherData(location);
+        }
+      }
+
+async function fetchAmbientData(deviceId) {
+  try {
+    const res = await fetch(`https://api.ambientweather.net/v1/devices/${deviceId}?apiKey=${AMBIENT_API_KEY}&applicationKey=${AMBIENT_APP_KEY}`);
+    const data = await res.json();
+    const weather = data[0].lastData;
+
+    const bgClass = weather.rainin > 0 ? "bg-rain" : "bg-sunny";
+    const status = weather.rainin > 0 ? "Caution: Rain" : "Safe to Swim! (Verified Station)";
+    const statusClass = weather.rainin > 0 ? "status-caution" : "status-safe";
+
+    updateUI({
+      title: "Live from Country Glen Pool",
+      summary: `Temp: ${weather.tempf}°F | UV Index: ${weather.uv} | Wind: ${weather.windspeedmph} mph`,
+      bgClass: bgClass,
+      rainGraph: weather.rainin > 0 ? [2, 2, 2, 2, 2, 2] : [0, 0, 0, 0, 0, 0], // Show consistent rain if raining
+      status: status,
+      statusClass: statusClass,
+      details: {
+        weather: weather.rainin > 0 ? "Rain" : "Clear",
+        thunder: "None",
+        rain: weather.rainin > 0 ? "Yes" : "None",
+        wind: `${weather.windspeedmph} mph`,
+        temp: `${weather.tempf}°F`,
+      },
+      notes: "Conditions reported by our on-site station.",
+    });
+  } catch (err) {
+    displayErrorData("Could not fetch data from local station.");
+  }
+}
+
+async function fetchAccuWeatherData(location) {
+  try {
+    const locRes = await fetch(`https://dataservice.accuweather.com/locations/v1/cities/search?apikey=${ACCUWEATHER_API_KEY}&q=${encodeURIComponent(location)}`, {
+      headers: {
+        'Accept': 'application/json'
+      },
+      mode: 'cors'
+    });
+
+    if (!locRes.ok) {
+      throw new Error(`Location search failed: ${locRes.status}`);
+    }
+
+    const locData = await locRes.json();
+    if (!locData || !locData.length) {
+      throw new Error('Location not found');
+    }
+    const locationKey = locData[0].Key;
+
+    const weatherRes = await fetch(`https://dataservice.accuweather.com/currentconditions/v1/${locationKey}?apikey=${ACCUWEATHER_API_KEY}&details=true`, {
+      headers: {
+        'Accept': 'application/json'
+      },
+      mode: 'cors'
+    });
+
+    if (!weatherRes.ok) {
+      throw new Error(`Weather data fetch failed: ${weatherRes.status}`);
+    }
+
+    const weatherData = await weatherRes.json();
+    if (!weatherData || !weatherData.length) {
+      throw new Error('No weather data available');
+    }
+    const weather = weatherData[0];
+
+    // Always fetch MinuteCast data to show potential precipitation
+    let rainGraph = [0, 0, 0, 0, 0, 0];
+    let minutecastNotes = "";
+
+    try {
+      console.log("Fetching MinuteCast data for location:", locationKey);
+      const minutecastRes = await fetch(`https://dataservice.accuweather.com/forecasts/v1/minute/${locationKey}?apikey=${ACCUWEATHER_MINUTECAST_API_KEY}&details=true`);
+
+      if (!minutecastRes.ok) {
+        throw new Error(`MinuteCast API error: ${minutecastRes.status}`);
+      }
+
+      const minutecast = await minutecastRes.json();
+      console.log("MinuteCast response:", minutecast);
+
+      if (minutecast && minutecast.Intervals) {
+        // Map precipitation intensity from intervals
+        rainGraph = minutecast.Intervals
+          .filter((_, index) => index % 10 === 0) // Sample every 10 minutes
+          .slice(0, 6)
+          .map(interval => {
+            const intensity = interval.Intensity || "Light";
+            return intensity === "Light" ? 1 :
+                   intensity === "Moderate" ? 2 :
+                   intensity === "Heavy" ? 3 : 1;
+          });
+
+        // If any rain is detected or there's lightning, ensure precipitation is shown
+        if ((minutecast.HasPrecipitation || weather.HasLightning) && rainGraph.every(v => v === 0)) {
+          rainGraph = [2, 2, 2, 2, 2, 2]; // Show moderate intensity for thunder
+        }
+
+        document.getElementById("rainGraphTitleText").textContent = 
+          weather.HasLightning ? "Thunderstorm Activity" : (minutecast.ShortPhrase || "Precipitation Forecast");
+        document.getElementById("rainGraphSubtitleText").textContent = 
+          weather.HasLightning ? "Storm intensity over the next hour" : "Rain intensity over the next hour";
+      }
+
+      minutecastNotes = minutecast.ShortPhrase || "";
+    } catch (err) {
+      console.error("MinuteCast fetch failed:", err);
+    }
+
+    // Determine status and UI state
+    let status, statusClass, bgClass;
+    if (weather.HasLightning || weather.WeatherText.toLowerCase().includes('thunder')) {
+      status = "DANGER: Thunderstorms";
+      statusClass = "status-unsafe";
+      bgClass = "bg-thunderstorm";
+      document.getElementById("rainGraphTitleText").textContent = "Thunderstorm Activity";
+      document.getElementById("rainGraphSubtitleText").textContent = "Storm intensity over the next hour";
+      rainGraph = [3, 3, 3, 3, 3, 3]; // Show maximum intensity for thunderstorms
+    } else if (weather.HasPrecipitation || weather.WeatherText.toLowerCase().includes('rain')) {
+      status = "CAUTION: Rain";
+      statusClass = "status-caution";
+      bgClass = "bg-rain";
+      document.getElementById("rainGraphTitleText").textContent = "Rain Intensity";
+      document.getElementById("rainGraphSubtitleText").textContent = "Rain intensity over the next hour";
+    } else {
+      status = "Safe to Swim";
+      statusClass = "status-safe";
+      bgClass = "bg-sunny";
+    }
+
+    updateUI({
+      title: weather.WeatherText,
+      summary: `Feels like ${weather.RealFeelTemperature.Imperial.Value}°F, Wind ${weather.Wind.Speed.Imperial.Value} ${weather.Wind.Speed.Imperial.Unit}`,
+      bgClass: bgClass,
+      rainGraph: rainGraph,
+      status: status,
+      statusClass: statusClass,
+      details: {
+        weather: weather.WeatherText,
+        thunder: weather.HasLightning ? "Yes" : "No",
+        rain: weather.HasPrecipitation ? "Yes" : "No",
+        wind: `${weather.Wind.Speed.Imperial.Value} ${weather.Wind.Speed.Imperial.Unit}`,
+        temp: `${weather.Temperature.Imperial.Value}°F`,
+      },
+      notes: minutecastNotes || "Conditions from AccuWeather.",
+    });
+  } catch (err) {
+    displayErrorData("Failed to get weather from AccuWeather.");
+  }
+}
+
+function updateUI({ title, summary, bgClass, rainGraph, status, statusClass, details, notes }) {
+  document.getElementById("currentConditionTitle").textContent = title;
+  document.getElementById("currentConditionSummary").textContent = summary;
+  document.getElementById("currentConditionsBox").className = `current-conditions-box ${bgClass}`;
+  renderRainGraph(rainGraph);
+
+  const safetyStatusElement = document.getElementById("safetyStatus");
+  safetyStatusElement.textContent = status;
+  safetyStatusElement.className = `safety-status ${statusClass}`;
+
+  document.getElementById("currentWeather").textContent = details.weather;
+  document.getElementById("thunderRisk").textContent = details.thunder;
+  document.getElementById("rainDuration").textContent = details.rain;
+  document.getElementById("windInfo").textContent = details.wind;
+  document.getElementById("airTemp").textContent = details.temp;
+
+  const notesBox = document.getElementById("additionalNotes");
+  if (notes) {
+    document.getElementById("notesContent").textContent = notes;
+    notesBox.style.display = "block";
+  } else {
+    notesBox.style.display = "none";
+  }
+}
+
+
+      function displayErrorData(message) {
+        document.getElementById("currentConditionTitle").textContent = "Error";
+        document.getElementById("currentConditionSummary").textContent =
+          message || "Could not retrieve live conditions.";
+        document.getElementById("currentConditionsBox").className =
+          "current-conditions-box";
+        document.getElementById("rainGraphContainer").style.display = "none";
+
+        document.getElementById("safetyStatus").textContent =
+          message || "Could not retrieve data.";
+        document.getElementById("safetyStatus").className =
+          "safety-status status-unsafe";
+        [
+          "currentWeather",
+          "thunderRisk",
+          "rainDuration",
+          "windInfo",
+          "airTemp",
+        ].forEach((id) => {
+          const el = document.getElementById(id);
+          if (el) el.textContent = "N/A";
+        });
+        document.getElementById("additionalNotes").style.display = "none";
+      }
+    </script>
+  </body>
+</html>

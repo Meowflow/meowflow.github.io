@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AquaRank - Your Swimming Elo</title>
+<style>
+        :root {
+            --primary-color: #005f73;
+            --secondary-color: #0a9396;
+            --accent-color: #94d2bd;
+            --background-start: #e0fbfc;
+            --background-mid: #cce3de;
+            --background-end: #a9d6e5;
+            --text-color: #001219;
+            --card-bg-color: rgba(255, 255, 255, 0.9);
+            --gold-color: #ffd700;
+            --silver-color: #c0c0c0;
+            --bronze-color: #cd7f32;
+            --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        @keyframes moveGradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes shimmer-blue {
+            0% { background-position: -100% 0; }
+            100% { background-position: 100% 0; }
+        }
+
+        @keyframes shimmer-pink {
+            0% { background-position: -100% 0; }
+            100% { background-position: 100% 0; }
+        }
+
+        body {
+            font-family: var(--font-family);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(-45deg, var(--background-start), var(--background-mid), var(--background-end));
+            background-size: 400% 400%;
+            animation: moveGradient 15s ease infinite;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 700px;
+            text-align: center;
+        }
+
+        header {
+            margin-bottom: 40px;
+        }
+
+        header h1 {
+            font-size: 3rem;
+            color: var(--primary-color);
+            margin: 0;
+            font-weight: 800;
+            letter-spacing: -1px;
+        }
+
+        header h1 .highlight {
+            color: var(--secondary-color);
+        }
+
+        header p {
+            font-size: 1.1rem;
+            color: var(--text-color);
+            opacity: 0.8;
+            max-width: 500px;
+            margin: 10px auto 0;
+        }
+
+        .search-box {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        #swimmer-input {
+            width: 100%;
+            max-width: 300px;
+            padding: 12px 15px;
+            font-size: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            background-color: rgba(255,255,255,0.8);
+        }
+
+        #swimmer-input:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 3px rgba(10, 147, 150, 0.2);
+        }
+
+        #search-btn {
+            padding: 12px 25px;
+            font-size: 1rem;
+            font-weight: 600;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        #search-btn:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        .results-container {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+            width: 100%;
+        }
+
+        .results-container.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .swimmer-card {
+            background-color: var(--card-bg-color);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            text-align: left;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+
+        .swimmer-info h2 {
+            margin: 0;
+            font-size: 1.8rem;
+            color: var(--primary-color);
+        }
+
+        .total-rank {
+            text-align: right;
+            display: flex;
+            align-items: center;
+        }
+
+        .total-rank .rank-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--secondary-color);
+            line-height: 1;
+        }
+
+        .total-rank .rank-label {
+            font-size: 0.9rem;
+            color: var(--text-color);
+            opacity: 0.7;
+            letter-spacing: 0.5px;
+        }
+
+        .total-rank-score {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+
+        .total-grade-badge {
+            padding: 6px 14px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            border-radius: 8px;
+            margin-left: 15px;
+            color: white;
+        }
+
+        /* Grade Colors */
+        .grade-SS {
+            background: linear-gradient(90deg, #ff006e, #ff8fa3, #ff006e);
+            background-size: 200% 100%;
+            animation: shimmer-pink 3s ease-in-out infinite;
+        }
+        .grade-S { background-color: #ff69b4; }
+        .grade-A-plus { background-color: #2a9d8f; }
+        .grade-A { background-color: #80ed99; color: var(--text-color); }
+        .grade-B { background-color: #fca311; }
+        .grade-C { background-color: #fee440; color: var(--text-color); }
+        .grade-D { background-color: #e63946; }
+
+
+        .times-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .times-table th, .times-table td {
+            padding: 12px 15px;
+            text-align: left;
+        }
+
+        .times-table th {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-color);
+            opacity: 0.6;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .times-table tr:not(:last-child) td {
+            border-bottom: 1px solid #f5f5f5;
+        }
+
+        .times-table td {
+            font-size: 1rem;
+        }
+
+        .rank-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-color);
+        }
+
+        .rank-PRO {
+            background: linear-gradient(90deg, #0077b6, #90e0ef, #0077b6);
+            background-size: 200% 100%;
+            animation: shimmer-blue 3s ease-in-out infinite;
+            color: white;
+            font-weight: 700;
+        }
+        .rank-AAAA { background-color: var(--gold-color); }
+        .rank-AAA { background-color: var(--accent-color); }
+        .rank-AA { background-color: var(--bronze-color); color: white; }
+        .rank-A { background-color: var(--silver-color); }
+        .rank-B { background-color: #e0e0e0; }
+        .rank-C { background-color: #f8f9fa; }
+        .rank-<B> {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .share-section {
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        #share-btn {
+            padding: 12px 30px;
+            font-size: 1rem;
+            font-weight: 600;
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        #share-btn:hover {
+            background-color: var(--primary-color);
+            transform: translateY(-2px);
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--primary-color);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 6px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+
+        .notification.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .error-message {
+            color: #d90429;
+            margin-top: 15px;
+            display: none;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        footer {
+            margin-top: 50px;
+            font-size: 0.9rem;
+            opacity: 0.8;
+            color: #001219;
+        }
+
+        @media (max-width: 600px) {
+            body { padding: 15px; }
+            header h1 { font-size: 2.5rem; }
+            header p { font-size: 1rem; }
+            .search-box { flex-direction: column; }
+            .card-header { flex-direction: column; gap: 15px; }
+            .swimmer-info { text-align: center; }
+            .total-rank { justify-content: center; }
+            .times-table th, .times-table td { padding: 10px 5px; }
+            .times-table td:first-child { font-weight: 600; }
+        }
+
+    </style>
+</head>
+<body>
+<div class="container">
+<header>
+<h1>Aqua<span class="highlight">Rank</span></h1>
+<p>Enter a swimmer's name to find their best times and discover their total competitive rank. Share with friends and climb the leaderboard!</p>
+<h5>Remember to type the swimmers' name EXACTLY: e.g. "Alex Johnson" or "Maria Garcia"</h5>
+</header>
+<main>
+<div class="search-box">
+<input id="swimmer-input" list="swimmers-list" placeholder="e.g., Alex Johnson" type="text"/>
+<datalist id="swimmers-list"></datalist>
+<button id="search-btn">Get Rank</button>
+</div>
+<p class="error-message" id="error-message">Swimmer not found. Please try another name.</p>
+<div class="results-container" id="results-container">
+<div class="swimmer-card">
+<div class="card-header">
+<div class="swimmer-info">
+<h2 id="swimmer-name"></h2>
+<p id="swimmer-age-club" style="margin: 5px 0 0; font-size: 0.95rem; color: #555;"></p></div>
+<div class="total-rank">
+<div class="total-rank-score">
+<div class="rank-value" id="total-rank-value"></div>
+<div class="rank-label">Total Rank Score</div>
+</div>
+<div id="total-grade-badge"></div>
+</div>
+</div>
+<table class="times-table" id="times-table-body">
+<thead>
+<tr>
+<th>Event</th>
+<th>Time</th>
+<th>Standard</th>
+<th>Score</th>
+</tr>
+</thead>
+<tbody>
+<!-- JS will populate this -->
+</tbody>
+</table>
+<div class="share-section">
+<button id="share-btn">Share My Rank</button>
+</div>
+</div>
+</div>
+</main>
+<footer>
+<p>© 2025 AquaRank. Inspired by Counter-Strike 2's Premier mode (go try it!)</p>
+</footer>
+</div>
+<div class="notification" id="notification">Link copied to clipboard!</div>
+<script>
+    function timeToSeconds(timeStr) {
+      if (!timeStr || typeof timeStr !== "string") return null;
+      const parts = timeStr.split(":").map(parseFloat);
+      return parts.length === 2
+        ? parts[0] * 60 + parts[1]
+        : parts[0];
+    }
+
+        // --- MOCK DATABASE & CONFIGURATION ---
+
+        const timeStandards = {
+    '10&Under': {
+        "50 Free": { PRO: "", AAAA: 27.49, AAA: 28.69, AA: 29.89, A: 31.09, BB: 34.59, B: 38.19 },
+        "100 Free": { PRO: "", AAAA: 60.69, AAA: 63.79, AA: 66.79, A: 69.79, BB: 78.89, B: 87.99 },
+        "200 Free": { PRO: "", AAAA: 132.69, AAA: 138.99, AA: 145.29, A: 151.59, BB: 170.59, B: 189.49 },
+        "500 Free": { PRO: "", AAAA: 352.99, AAA: 369.79, AA: 386.59, A: 403.39, BB: 453.79, B: 504.29 },
+        "50 Back": { PRO: "", AAAA: 32.19, AAA: 33.99, AA: 35.79, A: 37.59, BB: 42.89, B: 48.29 },
+        "100 Back": { PRO: "", AAAA: 68.99, AAA: 72.49, AA: 76.09, A: 79.59, BB: 90.09, B: 100.69 },
+        "50 Breast": { PRO: "", AAAA: 36.39, AAA: 38.29, AA: 40.19, A: 42.09, BB: 47.69, B: 53.39 },
+        "100 Breast": { PRO: "", AAAA: 78.79, AAA: 82.69, AA: 86.59, A: 90.59, BB: 102.29, B: 114.09 },
+        "50 Fly": { PRO: "", AAAA: 30.79, AAA: 32.59, AA: 34.29, A: 35.99, BB: 41.29, B: 46.49 },
+        "100 Fly": { PRO: "", AAAA: 69.79, AAA: 74.59, AA: 79.49, A: 84.39, BB: 98.99, B: 113.49 },
+        "100 IM": { PRO: "", AAAA: 69.79, AAA: 73.09, AA: 76.39, A: 79.69, BB: 89.69, B: 99.69 },
+        "200 IM": { PRO: "", AAAA: 150.89, AAA: 158.39, AA: 165.89, A: 173.49, BB: 195.99, B: 218.59 },
+    },
+    '11-12': {
+        "50 Free": { PRO: "", AAAA: 24.59, AAA: 25.79, AA: 26.99, A: 28.09, BB: 30.49, B: 32.79 },
+        "100 Free": { PRO: "", AAAA: 53.59, AAA: 56.19, AA: 58.69, A: 61.29, BB: 66.39, B: 71.49 },
+        "200 Free": { PRO: "", AAAA: 116.99, AAA: 122.59, AA: 128.19, A: 133.69, BB: 144.89, B: 155.99 },
+        "500 Free": { PRO: "", AAAA: 314.99, AAA: 329.99, AA: 344.99, A: 359.99, BB: 389.99, B: 419.89 },
+        "1000 Free": { PRO: "", AAAA: 662.59, AAA: 694.19, AA: 725.79, A: 757.29, BB: 820.39, B: 883.49 },
+        "1650 Free": { PRO: "", AAAA: 1100.79, AAA: 1153.19, AA: 1205.59, A: 1257.09, BB: 1362.89, B: 1467.69 },
+        "50 Back": { PRO: "", AAAA: 28.19, AAA: 29.69, AA: 31.19, A: 32.69, BB: 35.59, B: 38.49 },
+        "100 Back": { PRO: "", AAAA: 59.49, AAA: 62.79, AA: 65.99, A: 69.29, BB: 75.69, B: 82.19 },
+        "200 Back": { PRO: "", AAAA: 129.69, AAA: 135.89, AA: 141.99, A: 148.19, BB: 160.49, B: 172.89 },
+        "50 Breast": { PRO: "", AAAA: 31.49, AAA: 33.29, AA: 34.99, A: 36.69, BB: 40.09, B: 43.49 },
+        "100 Breast": { PRO: "", AAAA: 67.79, AAA: 71.39, AA: 74.89, A: 78.39, BB: 85.49, B: 92.59 },
+        "200 Breast": { PRO: "", AAAA: 147.29, AAA: 154.39, AA: 161.39, A: 168.39, BB: 182.39, B: 196.39 },
+        "50 Fly": { PRO: "", AAAA: 26.69, AAA: 28.19, AA: 29.69, A: 31.19, BB: 34.19, B: 37.09 },
+        "100 Fly": { PRO: "", AAAA: 59.09, AAA: 62.49, AA: 65.89, A: 69.29, BB: 76.09, B: 82.89 },
+        "200 Fly": { PRO: "", AAAA: 132.39, AAA: 138.69, AA: 144.99, A: 151.39, BB: 163.99, B: 176.59 },
+        "100 IM": { PRO: "", AAAA: 61.09, AAA: 63.99, AA: 66.99, A: 69.99, BB: 75.89, B: 81.89 },
+        "200 IM": { PRO: "", AAAA: 132.09, AAA: 138.79, AA: 145.59, A: 152.29, BB: 165.79, B: 179.29 },
+        "400 IM": { PRO: "", AAAA: 282.79, AAA: 296.29, AA: 309.79, A: 323.19, BB: 350.09, B: 377.09 },
+    },
+    "13-14": {
+        "50 Free":    { PRO: "21.69", AAAA: 22.39, AAA: 23.49, AA: 24.59, A: 25.59, BB: 27.69, B: 29.89 },
+        "100 Free":   { PRO: "", AAAA: 48.69, AAA: 51.09, AA: 53.39, A: 55.69, BB: 60.29, B: 64.99 },
+        "200 Free":   { PRO: "", AAAA: 106.89, AAA: 111.99, AA: 117.09, A: 122.19, BB: 132.29, B: 142.49 },
+        "500 Free":   { PRO: "", AAAA: 289.29, AAA: 303.09, AA: 316.89, A: 330.59, BB: 358.19, B: 385.69 },
+        "1000 Free":  { PRO: "", AAAA: 598.49, AAA: 626.99, AA: 655.49, A: 683.99, BB: 740.99, B: 797.99 },
+        "1650 Free":  { PRO: "", AAAA: 1007.19, AAA: 1055.19, AA: 1103.09, A: 1151.09, BB: 1246.99, B: 1342.89 },
+        "50 Back":    { PRO: "", AAAA: 25.29, AAA: 26.49, AA: 27.69, A: 28.89, BB: 31.29, B: 33.69 },
+        "100 Back":   { PRO: "", AAAA: 53.49, AAA: 55.99, AA: 58.59, A: 61.09, BB: 66.19, B: 71.29 },
+        "200 Back":   { PRO: "", AAAA: 115.99, AAA: 121.59, AA: 127.09, A: 132.59, BB: 143.69, B: 154.69 },
+        "50 Breast":  { PRO: "", AAAA: 28.89, AAA: 30.29, AA: 31.69, A: 33.09, BB: 35.79, B: 38.59 },
+        "100 Breast": { PRO: "", AAAA: 60.39, AAA: 63.29, AA: 66.19, A: 68.99, BB: 74.79, B: 80.49 },
+        "200 Breast": { PRO: "", AAAA: 131.19, AAA: 137.39, AA: 143.59, A: 149.89, BB: 162.39, B: 174.89 },
+        "50 Fly":     { PRO: "", AAAA: 24.89, AAA: 26.09, AA: 27.19, A: 28.39, BB: 30.79, B: 33.19 },
+        "100 Fly":    { PRO: "", AAAA: 52.89, AAA: 55.39, AA: 57.89, A: 60.39, BB: 65.49, B: 70.49 },
+        "200 Fly":    { PRO: "", AAAA: 117.59, AAA: 123.19, AA: 128.79, A: 134.39, BB: 145.59, B: 156.79 },
+        "200 IM":     { PRO: "", AAAA: 118.49, AAA: 124.09, AA: 129.79, A: 135.39, BB: 146.69, B: 157.99 },
+        "400 IM":     { PRO: "", AAAA: 253.29, AAA: 265.39, AA: 277.39, A: 289.49, BB: 313.59, B: 337.69 },
+    },
+    "15-16": {
+        "50 Free":    { PRO: "20.69", AAAA: 21.19, AAA: 22.19, AA: 23.19, A: 24.19, BB: 26.29, B: 28.29 },
+        "100 Free":   { PRO: "", AAAA: 46.49, AAA: 48.79, AA: 50.99, A: 53.19, BB: 57.59, B: 61.99 },
+        "200 Free":   { PRO: "", AAAA: 101.99, AAA: 106.89, AA: 111.79, A: 116.59, BB: 126.29, B: 135.99 },
+        "500 Free":   { PRO: "", AAAA: 276.29, AAA: 289.49, AA: 302.69, A: 315.79, BB: 342.09, B: 368.39 },
+        "1000 Free":  { PRO: "", AAAA: 578.89, AAA: 603.39, AA: 627.99, A: 652.59, BB: 716.69, B: 770.79 },
+        "1650 Free":  { PRO: "", AAAA: 964.99, AAA: 1010.89, AA: 1056.79, A: 1102.69, BB: 1194.69, B: 1286.59 },
+        "100 Back":   { PRO: "", AAAA: 50.69, AAA: 53.09, AA: 55.49, A: 57.89, BB: 62.69, B: 67.49 },
+        "200 Back":   { PRO: "", AAAA: 110.69, AAA: 115.99, AA: 121.29, A: 126.59, BB: 137.09, B: 147.59 },
+        "100 Breast": { PRO: "", AAAA: 57.69, AAA: 60.39, AA: 63.19, A: 65.89, BB: 71.39, B: 76.89 },
+        "200 Breast": { PRO: "", AAAA: 125.29, AAA: 131.29, AA: 137.29, A: 143.19, BB: 155.19, B: 167.09 },
+        "100 Fly":    { PRO: "", AAAA: 50.39, AAA: 52.79, AA: 55.19, A: 57.59, BB: 62.39, B: 67.19 },
+        "200 Fly":    { PRO: "", AAAA: 112.69, AAA: 118.09, AA: 123.49, A: 128.79, BB: 139.49, B: 150.19 },
+        "200 IM":     { PRO: "", AAAA: 113.19, AAA: 118.59, AA: 123.99, A: 129.39, BB: 140.19, B: 150.89 },
+        "400 IM":     { PRO: "", AAAA: 241.59, AAA: 253.19, AA: 264.79, A: 275.99, BB: 299.19, B: 322.39 },
+    },
+"17-18": {
+        "50 Free":    { PRO: "20.09", AAAA: 20.69, AAA: 21.69, AA: 22.59, A: 23.59, BB: 25.59, B: 27.59 },
+        "100 Free":   { PRO: "", AAAA: 45.29, AAA: 47.39, AA: 49.59, A: 51.69, BB: 55.99, B: 60.29 },
+        "200 Free":   { PRO: "", AAAA: 100.19, AAA: 104.99, AA: 109.69, A: 114.49, BB: 123.99, B: 133.19 },
+        "500 Free":   { PRO: "", AAAA: 272.39, AAA: 285.39, AA: 298.39, A: 311.39, BB: 337.29, B: 363.19 },
+        "1000 Free":  { PRO: "", AAAA: 570.19, AAA: 624.49, AA: 648.99, A: 675.59, BB: 705.89, B: 760.19 },
+        "1650 Free":  { PRO: "", AAAA: 951.79, AAA: 997.09, AA: 1042.39, A: 1062.39, BB: 1102.69, B: 1249.39 },
+        "100 Back":   { PRO: "", AAAA: 48.89, AAA: 51.29, AA: 53.59, A: 55.89, BB: 60.59, B: 65.19 },
+        "200 Back":   { PRO: "", AAAA: 107.89, AAA: 113.09, AA: 118.19, A: 123.29, BB: 133.59, B: 143.89 },
+        "100 Breast": { PRO: "", AAAA: 55.99, AAA: 58.69, AA: 61.39, A: 63.99, BB: 69.39, B: 74.69 },
+        "200 Breast": { PRO: "", AAAA: 121.69, AAA: 127.49, AA: 133.29, A: 139.09, BB: 150.69, B: 162.29 },
+        "100 Fly":    { PRO: "", AAAA: 49.09, AAA: 51.39, AA: 53.69, A: 56.09, BB: 60.79, B: 65.39 },
+        "200 Fly":    { PRO: "", AAAA: 109.79, AAA: 115.09, AA: 120.29, A: 125.49, BB: 135.99, B: 146.39 },
+        "200 IM":     { PRO: "", AAAA: 110.59, AAA: 115.89, AA: 121.09, A: 126.39, BB: 137.09, B: 148.19 },
+        "400 IM":     { PRO: "", AAAA: 237.99, AAA: 249.39, AA: 260.69, A: 271.99, BB: 294.69, B: 317.39 },
+    }
+};
+
+        const rankPoints = { PRO: 1500, AAAA: 1000, AAA: 850, AA: 700, A: 550, BB: 400, B: 250 };
+        const standardOrder = ['PRO', 'AAAA', 'AAA', 'AA', 'A', 'BB', 'B', '<B'];
+
+
+        const swimmersDB = {
+  'alex johnson': {
+    name: 'Alex Johnson',
+    age: 14,
+    gender: 'Male',
+    club: 'Blue Wave Swim Club',
+    times: [
+      { event: '50 Free', time: 21.49 },
+      { event: '100 Free', time: 46.99 },
+      { event: '100 Back', time: 52.01 },
+      { event: '100 Fly', time: 48.21 }
+    ]
+  },
+    'joe white': {
+        name: 'Joe White',
+        age: 12,
+        gender: 'Male',
+        club: 'Ocean School',
+        times: [
+            { event: '50 Free', time: 25.17 },
+            { event: '100 Free', time: 54.99 },
+            { event: '100 Fly', time: 57.01 },
+            { event: '100 Back', time: 59.24 },
+            { event: '200 IM', time: 126.69 }
+        ]
+      },
+  'maria garcia': {
+    name: 'Maria Garcia',
+    age: 14,
+    gender: 'Female',
+    club: 'Sun Valley Aquatics',
+    times: [
+      { event: '100 Free', time: 50.85 },
+      { event: '200 Free', time: 117.99 },
+      { event: '100 Breast', time: 71.50 },
+      { event: '200 IM', time: 199.80 }
+    ]
+  },
+  'sam chen': {
+    name: 'Sam Chen',
+    age: 14,
+    gender: 'Male',
+    club: 'Dolphin Swim Academy',
+    times: [
+      { event: '50 Free', time: 24.12 },
+      { event: '100 Free', time: 53.01 },
+      { event: '100 Back', time: 58.15 },
+      { event: '100 Breast', time: 105.00 }
+    ]
+  }
+};
+
+        // --- CORE LOGIC ---
+
+function getAgeGroup(age) {
+    if (age <= 10) return '10&U';
+    if (age <= 12) return '11-12';
+    if (age <= 14) return '13-14';
+    if (age <= 16) return '15-16';
+    return '17-18';
+}
+
+
+    function calculateScoreForTime(event, swimmerTime, age) {
+        const ageGroup = getAgeGroup(age);
+        const eventStandards = timeStandards[ageGroup]?.[event];
+        if (!eventStandards) return { score: 0, standard: 'N/A' };
+
+        if (swimmerTime <= eventStandards.PRO) {
+            return { score: rankPoints.PRO, standard: 'PRO' };
+        }
+
+        for (let i = 0; i < standardOrder.length - 2; i++) {
+            const upperStandardName = standardOrder[i];
+            const lowerStandardName = standardOrder[i + 1];
+            const upperTime = eventStandards[upperStandardName];
+            const lowerTime = eventStandards[lowerStandardName];
+
+            if (swimmerTime >= upperTime && swimmerTime < lowerTime) {
+                const upperPoints = rankPoints[upperStandardName];
+                const lowerPoints = rankPoints[lowerStandardName];
+
+                const timeRange = lowerTime - upperTime;
+                const pointRange = upperPoints - lowerPoints;
+
+                if (timeRange <= 0) return { score: upperPoints, standard: upperStandardName };
+
+                const timeProgress = swimmerTime - upperTime;
+                const score = upperPoints - (timeProgress / timeRange) * pointRange;
+                return { score: score, standard: lowerStandardName };
+            }
+        }
+
+        // If the swimmerTime is slower than the B standard:
+        if (swimmerTime >= eventStandards.B) {
+            return { score: 0, standard: '<B' };
+        }
+
+        return { score: 0, standard: 'N/A' }; // Fallback
+    }
+
+
+        function getGradeForTotalScore(score) { // Grade thresholds
+            if (score >= 4000) return 'SS';
+            if (score >= 3500) return 'S';
+            if (score >= 3100) return 'A+';
+            if (score >= 2850) return 'A';
+            if (score >= 2200) return 'B';
+            if (score >= 1600) return 'C';
+            return 'D';
+        }
+
+        function formatTime(totalSeconds) {
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = (totalSeconds % 60).toFixed(2).padStart(5, '0');
+            return minutes > 0 ? `${minutes}:${seconds}` : seconds.replace(/^0+/, '');
+        }
+
+        function displayResults(swimmerData) {
+            const { name, times, age, club } = swimmerData;
+            let totalRank = 0;
+
+            const swimmerNameEl = document.getElementById('swimmer-name');
+            const totalRankValueEl = document.getElementById('total-rank-value');
+            const totalGradeBadgeEl = document.getElementById('total-grade-badge');
+            const tableBodyEl = document.querySelector('#times-table-body tbody');
+            const resultsContainer = document.getElementById('results-container');
+            const errorMessage = document.getElementById('error-message');
+
+            swimmerNameEl.textContent = name;
+            const ageGroup = getAgeGroup(age);
+document.getElementById('swimmer-age-club').textContent = `Age: ${age} (${ageGroup}) • ${swimmerData.gender || 'Unspecified'} • Club: ${club}`;
+            tableBodyEl.innerHTML = '';
+
+            times.forEach(t => {
+                const result = calculateScoreForTime(t.event, t.time, age);
+                totalRank += result.score;
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${t.event}</td>
+                    <td>${formatTime(t.time)}</td>
+                    <td><span class="rank-badge rank-${result.standard}">${result.standard}</span></td>
+                    <td>${Math.round(result.score)}</td>
+                `;
+                tableBodyEl.appendChild(row);
+            });
+
+            totalRankValueEl.textContent = Math.round(totalRank);
+
+            const grade = getGradeForTotalScore(totalRank);
+            totalGradeBadgeEl.textContent = grade;
+            const gradeClassName = `grade-${grade.replace('+', '-plus')}`;
+            totalGradeBadgeEl.className = `total-grade-badge ${gradeClassName}`;
+
+            errorMessage.style.display = 'none';
+            resultsContainer.classList.add('visible');
+        }
+
+        function handleSearch() {
+            const input = document.getElementById('swimmer-input').value.toLowerCase().trim();
+            const swimmerData = swimmersDB[input];
+            const resultsContainer = document.getElementById('results-container');
+            const errorMessage = document.getElementById('error-message');
+
+            if (swimmerData) {
+                displayResults(swimmerData);
+            } else {
+                resultsContainer.classList.remove('visible');
+                errorMessage.style.display = 'block';
+            }
+        }
+
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.classList.add('show');
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 2500);
+        }
+
+        function handleShare() {
+            const swimmerName = document.getElementById('swimmer-name').textContent;
+            const totalRank = document.getElementById('total-rank-value').textContent;
+            const grade = document.getElementById('total-grade-badge').textContent;
+
+            if (!swimmerName) return;
+
+            const shareText = `Check out my AquaRank for ${swimmerName}! I'm a grade ${grade} with a score of ${totalRank}. Can you beat it?`;
+            const shareUrl = window.location.href.split('?')[0] + `?swimmer=${encodeURIComponent(swimmerName.toLowerCase().trim())}`;
+
+            navigator.clipboard.writeText(`${shareText} ${shareUrl}`).then(() => {
+                showNotification('Link and score copied to clipboard!');
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                showNotification('Could not copy link.');
+            });
+        }
+
+        function checkUrlForSwimmer() {
+            const params = new URLSearchParams(window.location.search);
+            const swimmerName = params.get('swimmer');
+            if (swimmerName && swimmersDB[swimmerName]) {
+                document.getElementById('swimmer-input').value = swimmersDB[swimmerName].name;
+                displayResults(swimmersDB[swimmerName]);
+            }
+        }
+
+        // --- EVENT LISTENERS ---
+        document.getElementById('search-btn').addEventListener('click', handleSearch);
+        document.getElementById('swimmer-input').addEventListener('keyup', (event) => {
+            if (event.key === 'Enter') {
+                handleSearch();
+            }
+        });
+        document.getElementById('share-btn').addEventListener('click', handleShare);
+
+        const datalist = document.getElementById('swimmers-list');
+        Object.values(swimmersDB).forEach(swimmer => {
+            const option = document.createElement('option');
+            option.value = swimmer.name;
+            datalist.appendChild(option);
+        });
+
+        window.addEventListener('load', checkUrlForSwimmer);
+
+    </script>
+</body>
+</html>
