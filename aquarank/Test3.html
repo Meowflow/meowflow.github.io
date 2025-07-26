@@ -257,10 +257,6 @@
         .rank-A { background-color: var(--accent-color); }
         .rank-B { background-color: #e0e0e0; }
         .rank-C { background-color: #f8f9fa; }
-        .rank-<B> {
-            background-color: #f8d7da;
-            color: #721c24;
-        }
 
         .share-section {
             margin-top: 30px;
@@ -485,47 +481,34 @@
 };
 
         const rankPoints = { PRO: 1500, AAAA: 1000, AAA: 850, AA: 700, A: 550, BB: 400, B: 250 };
-        const standardOrder = ['PRO', 'AAAA', 'AAA', 'AA', 'A', 'BB', 'B', '<B'];
+        const standardOrder = ['PRO', 'AAAA', 'AAA', 'AA', 'A', 'BB', 'B'];
 
 
         const swimmersDB = {
-  'alex johnson': {
-    name: 'Alex Johnson',
-    age: 14,
-    gender: 'Male',
-    club: 'Blue Wave Swim Club',
-    times: [
-      { event: '50 Free', time: 21.49 },
-      { event: '100 Free', time: 46.99 },
-      { event: '100 Back', time: 52.01 },
-      { event: '100 Fly', time: 48.21 }
-    ]
-  },
-  'maria garcia': {
-    name: 'Maria Garcia',
-    age: 14,
-    gender: 'Female',
-    club: 'Sun Valley Aquatics',
-    times: [
-      { event: '100 Free', time: 50.85 },
-      { event: '200 Free', time: 117.99 },
-      { event: '100 Breast', time: 71.50 },
-      { event: '200 IM', time: 199.80 }
-    ]
-  },
-  'sam chen': {
-    name: 'Sam Chen',
-    age: 14,
-    gender: 'Male',
-    club: 'Dolphin Swim Academy',
-    times: [
-      { event: '50 Free', time: 24.12 },
-      { event: '100 Free', time: 53.01 },
-      { event: '100 Back', time: 58.15 },
-      { event: '100 Breast', time: 105.00 }
-    ]
-  }
-};
+            'alex johnson': {
+                name: 'Alex Johnson',
+                age: 14,
+                club: 'Blue Wave Swim Club',
+                times: [
+                    { event: '50 Free', time: 21.49 },
+                    { event: '100 Free', time: 46.99 },
+                    { event: '100 Back', time: 52.01 },
+                    { event: '100 Fly', time: 48.21 },
+                ]
+            },
+            'maria garcia': {
+                name: 'Maria Garcia',
+                age: 14,
+                club: 'Sun Valley Aquatics',
+                times: [ { event: '100 Free', time: 50.85 }, { event: '200 Free', time: 117.99 }, { event: '100 Breast', time: 71.50 }, { event: '200 IM', time: 189.80 } ]
+            },
+            'sam chen': {
+                name: 'Sam Chen',
+                age: 14,
+                club: 'Dolphin Swim Academy',
+                times: [ { event: '50 Free', time: 24.12 }, { event: '100 Free', time: 53.01 }, { event: '100 Back', time: 58.15 }, { event: '100 Breast', time: 105.00 } ]
+            }
+        };
 
         // --- CORE LOGIC ---
 
@@ -538,44 +521,41 @@ function getAgeGroup(age) {
 }
 
 
-    function calculateScoreForTime(event, swimmerTime, age) {
-        const ageGroup = getAgeGroup(age);
-        const eventStandards = timeStandards[ageGroup]?.[event];
-        if (!eventStandards) return { score: 0, standard: 'N/A' };
+        function calculateScoreForTime(event, swimmerTime, age) {
+            const ageGroup = getAgeGroup(age);
+    const eventStandards = timeStandards[ageGroup]?.[event];
+            if (!eventStandards) return { score: 0, standard: 'N/A' };
 
-        if (swimmerTime <= eventStandards.PRO) {
-            return { score: rankPoints.PRO, standard: 'PRO' };
-        }
-
-        for (let i = 0; i < standardOrder.length - 2; i++) {
-            const upperStandardName = standardOrder[i];
-            const lowerStandardName = standardOrder[i + 1];
-            const upperTime = eventStandards[upperStandardName];
-            const lowerTime = eventStandards[lowerStandardName];
-
-            if (swimmerTime >= upperTime && swimmerTime < lowerTime) {
-                const upperPoints = rankPoints[upperStandardName];
-                const lowerPoints = rankPoints[lowerStandardName];
-
-                const timeRange = lowerTime - upperTime;
-                const pointRange = upperPoints - lowerPoints;
-
-                if (timeRange <= 0) return { score: upperPoints, standard: upperStandardName };
-
-                const timeProgress = swimmerTime - upperTime;
-                const score = upperPoints - (timeProgress / timeRange) * pointRange;
-                return { score: score, standard: lowerStandardName };
+            if (swimmerTime <= eventStandards.PRO) {
+                return { score: rankPoints.PRO, standard: 'PRO' };
             }
+
+            for (let i = 0; i < standardOrder.length - 1; i++) {
+                const upperStandardName = standardOrder[i];
+                const lowerStandardName = standardOrder[i+1];
+                const upperTime = eventStandards[upperStandardName];
+                const lowerTime = eventStandards[lowerStandardName];
+
+                if (swimmerTime >= upperTime && swimmerTime < lowerTime) {
+                    const upperPoints = rankPoints[upperStandardName];
+                    const lowerPoints = rankPoints[lowerStandardName];
+                    const timeRange = lowerTime - upperTime;
+                    const pointRange = upperPoints - lowerPoints;
+
+                    if (timeRange <= 0) return { score: upperPoints, standard: upperStandardName };
+
+                    const timeProgress = swimmerTime - upperTime;
+                    const score = upperPoints - (timeProgress / timeRange) * pointRange;
+                    return { score: score, standard: lowerStandardName };
+                }
+            }
+
+            if (swimmerTime >= eventStandards.B) {
+                return { score: rankPoints.C, standard: 'C' };
+            }
+
+            return { score: 0, standard: 'N/A' };
         }
-
-        // If the swimmerTime is slower than the B standard:
-        if (swimmerTime >= eventStandards.B) {
-            return { score: 0, standard: '<B' };
-        }
-
-        return { score: 0, standard: 'N/A' }; // Fallback
-    }
-
 
         function getGradeForTotalScore(score) { // Grade thresholds
             if (score >= 4000) return 'SS';
@@ -605,8 +585,7 @@ function getAgeGroup(age) {
             const errorMessage = document.getElementById('error-message');
 
             swimmerNameEl.textContent = name;
-            const ageGroup = getAgeGroup(age);
-document.getElementById('swimmer-age-club').textContent = `Age: ${age} (${ageGroup}) • ${swimmerData.gender || 'Unspecified'} • Club: ${club}`;
+            document.getElementById('swimmer-age-club').textContent = `Age: ${age} | Club: ${club}`;
             tableBodyEl.innerHTML = '';
 
             times.forEach(t => {
